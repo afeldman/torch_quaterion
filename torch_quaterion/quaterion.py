@@ -6,18 +6,21 @@ import numpy as np
 from apu.ast.property import ClassProperty
 
 class Quaterion:
+
+    gpu = True if torch.cuda.is_available() else False
+
     def __init__(self, size:int=0, *args, **kwargs) -> None:
 
         if size <= 0:
             size = 1
 
-        self.cpu = True
+        one = np.array([1.,0.,0.,0.]) 
 
-        if torch.cuda.is_available():
-            self.quaterion = torch.from_numpy(Quaterion.one).float().cuda().repeat(size,1)
-            self.cpu = False
+        if self.gpu:
+            self.quaterion = torch.from_numpy(one).float().cuda().repeat(size,1)
         else:
-            self.quaterion = torch.from_numpy(Quaterion.one).float().cpu().repeat(size,1)
+            self.quaterion = torch.from_numpy(one).float().cpu().repeat(size,1)
+
 
     def is_unit(self) -> bool:
         return bool(torch.all(self.norm.bool()))
@@ -172,7 +175,7 @@ class Quaterion:
 
     @property
     def norm(self):
-        return self.quaterion.norm(p=2, dim=1, keepdim=True).float().detach()
+        return self.quaterion.norm(p=2, dim=1, keepdim=True).float().squeeze().detach()
 
     @property
     def magnitude(self):
@@ -216,53 +219,74 @@ class Quaterion:
 
         quat = Quaterion()
 
-        if quat.cpu:
-            quat.quaterion = torch.rand(counter, 4).float().cpu()
-        else:
+        if self.gpu:
             quat.quaterion = torch.rand(counter, 4).float().cuda()
+        else:
+            quat.quaterion = torch.rand(counter, 4).float().cpu()
 
         return quat
 
     @ClassProperty
     @classmethod
-    def zero(cls):
-        return np.array([0.,0.,0.,0.], dtype=np.float32)
+    def zero(cls):        
+        quat = Quaterion.one
+        quat.quaterion[0,0] = 0.0
+        return quat
     
     @ClassProperty
     @classmethod
-    def one(cls):
-        return np.array([1.,0.,0.,0.], dtype=np.float32)  
+    def one(cls):        
+        quat = Quaterion(1)
+        return quat 
     
     @ClassProperty
     @classmethod
     def x_(cls):
-        return np.array([0.,1.,0.,0.], dtype=np.float32)
+        quat = Quaterion.zero
+        quat.quaterion[0,1]
+        return quat
   
     @ClassProperty
     @classmethod
     def y_(cls):
-        return np.array([0.,0.,1.,0.], dtype=np.float32)
+        quat = Quaterion.zero
+        quat.quaterion[0,2]
+        return quat
 
     @ClassProperty
     @classmethod
     def z_(cls):
-        return np.array([0.,0.,0.,1.], dtype=np.float32)
+        quat = Quaterion.zero
+        quat.quaterion[0,3]
+        return quat
   
     @property
     def w(self):
-        return self.quaterion[:,0].numpy()
+        return self.quaterion[:,0]
 
     @property
     def x(self):
-        return self.quaterion[:,1].numpy()
+        return self.quaterion[:,1]
 
     @property
     def y(self):
-        return self.quaterion[:,2].numpy()
+        return self.quaterion[:,2]
 
     @property
     def z(self):
-        return self.quaterion[:,3].numpy()
+        return self.quaterion[:,3]
+
+    @property
+    def polar_unit_vector(self):
+        return torch.nn.functional.normalize(self.vector).detach().squeeze()
+
+    @property
+    def polar_angle(self):
+        return torch.acos(self.scalar / self.norm.T).detach().squeeze()
+
+    @property
+    def polar_decomposition(self):
+        return self.polar_unit_vector, self.polar_angle
 
     def __str__(self):
         return f"size is {self.__len__()}\n\n"
@@ -273,11 +297,45 @@ class Quaterion:
     def __eq__(self, p):
         return self.quaterion.equal(p.quaterion)
 
-    def __eq__(self, p):
-        return not self == p
+    def __neg__(self):
+        return -1. * self
+
+    @property
+    def conjugate(self):
+        self.quaterion[..., 1:] *= -1  
+        return self
+
+    def __pow__(self, exponent):
+        exponent = float(exponent)
+        norm = self.norm
+        n, theta = self.polar_decomposition
+
+        tmp = (norm ** exponent)
+
+        self.quaterion[...,0] = tmp * torch.cos(exponent * theta)
+        self.quaterion[...,1:] = (tmp * n.T * torch.sin(exponent * theta)).T
+            
+        return self
+
+    def __ipow__(self, other):
+        return self ** other
+
+    def __rpow__(self, other):
+        return other ** float(self)
+
+    def rotate_quaternion(self, p):
+        assert torch.count_nonzero(p.scalar) == 0, "p has to be of form p[...,0]=0"
+
+        if not self.is_unit():
+            _ = self.normalize
+        return self * p * self.conjugate
 
 if __name__=="__main__":
     quat = Quaterion(2)
-    quat2= Quaterion.random(2133)
-    quat2.normalize
-    print(quat==quat)
+    quat2= Quaterion.random(2)
+
+    rot = Quaterion.random(2)
+    rot.quaterion[...,0]=0.0
+
+    print(quat2.rotate_quaternion(rot))
+    print((quat2**3).quaterion)
