@@ -1,6 +1,5 @@
 ''' quaternion with torch backend '''
 import numbers
-from numpy.lib.arraysetops import isin
 import torch
 import numpy as np
 
@@ -19,6 +18,26 @@ class Quaterion:
             self.cpu = False
         else:
             self.quaterion = torch.from_numpy(Quaterion.one).float().cpu().repeat(size,1)
+
+    def is_unit(self) -> bool:
+        return bool(torch.all(self.norm.bool()))
+
+    @property
+    def normalize(self):
+        if self.is_unit():
+            self.quaterion = torch.nn.functional.normalize(self.quaterion)
+
+        return self
+
+    def complex(self):
+        data = self.quaterion[:,0:2].cpu().numpy()
+        result = np.empty(data.shape[:-1], dtype=complex)
+        result.real, result.imag=data[...,0], data[...,1]
+        return result
+
+    # length
+    def __len__(self):
+        return int(self.quaterion.shape[0])
 
     # addition
     def __rsub__(self, p):
@@ -67,6 +86,50 @@ class Quaterion:
 
         return self
 
+    # division
+    def __div__(self, p):
+        if isinstance(p, Quaterion):
+            self.quaterion = torch.div(self.quaterion,p.quaterion)
+        elif isinstance(p, numbers.Number):
+            self.quaterion = torch.div(self.quaterion,p)
+        else:
+            raise TypeError("data type not implemented")
+
+        return self
+
+    def __rdiv__(self, p):
+        return self / p
+
+    def __idiv__(self, p):
+        return self / p
+
+    def __truediv__(self, p):
+        if isinstance(p, Quaterion):
+            self.quaterion = torch.true_divide(self.quaterion,p.quaterion)
+        elif isinstance(p, numbers.Number):
+            self.quaterion = torch.true_divide(self.quaterion,p)
+        else:
+            raise TypeError("data type not implemented")
+
+        return self
+        
+
+    def __rtruediv__(self, p):
+        return self /p
+
+    def __itruediv__(self, p):
+        return self /p
+
+    def __floordiv__(self, p):
+        if isinstance(p, Quaterion):
+            self.quaterion = torch.floor_divide(self.quaterion,p.quaterion)
+        elif isinstance(p, numbers.Number):
+            self.quaterion = torch.floor_divide(self.quaterion,p)
+        else:
+            raise TypeError("data type not implemented")
+
+        return self
+
     # multiplication 
     def __imul__(self, p):
         return self * p
@@ -98,11 +161,22 @@ class Quaterion:
         return self
 
     def __matmul__(self, p):
-        return self * p
+        return torch.matmul(self, p)
 
-    # length
-    def __len__(self):
-        return int(self.quaterion.shape[0])
+    def __abs__(self):
+        return self.norm
+
+    @property
+    def sq_sum(self):
+        return (self.quaterion * self.quaterion).sum(dim=1).float()
+
+    @property
+    def norm(self):
+        return self.quaterion.norm(p=2, dim=1, keepdim=True).float().detach()
+
+    @property
+    def magnitude(self):
+        return self.norm
 
     # properties
     @property
@@ -112,6 +186,26 @@ class Quaterion:
     @property
     def np(self):
         return self.quaterion.cpu().numpy()
+
+    @property
+    def elements(self):
+        return self.quaterion
+
+    @property
+    def real(self):
+        return self.scalar
+
+    @property
+    def imaginary(self):
+        return self.vector
+
+    @property
+    def vector(self):
+        return self.quaterion[:,1:]
+
+    @property
+    def scalar(self):
+        return self.quaterion[:,0]
 
     @classmethod
     def random(self, counter:int=1):
@@ -170,7 +264,20 @@ class Quaterion:
     def z(self):
         return self.quaterion[:,3].numpy()
 
+    def __str__(self):
+        return f"size is {self.__len__()}\n\n"
+
+    def __repr__(self):
+        return f"size is {self.__len__()}\n\n"
+
+    def __eq__(self, p):
+        return self.quaterion.equal(p.quaterion)
+
+    def __eq__(self, p):
+        return not self == p
+
 if __name__=="__main__":
-    quat = Quaterion(30)
-    quat2= Quaterion.random(30)
-    print((quat*quat2).quaterion)
+    quat = Quaterion(2)
+    quat2= Quaterion.random(2133)
+    quat2.normalize
+    print(quat==quat)
