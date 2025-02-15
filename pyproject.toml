@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "torch-quaternion"
+version = "0.2.0"
+description = "Quaternion Arithmetic with torch backend"
+authors = ["Anton Feldmann <anton.feldmann@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "torch_quaternion"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+torch = "^2.6.0"
+numpy = "1.26.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
