@@ -154,11 +154,11 @@ class Quaternion:
         Subtracts another quaternion or a scalar from this quaternion.
 
         Args:
-            p (Quaterion or numbers.Number): The quaternion or scalar to subtract.
+            p (quaternion or numbers.Number): The quaternion or scalar to subtract.
             alpha (numbers.Number): A scaling factor for the subtraction.
 
         Returns:
-            Quaterion: This quaternion after subtraction.
+            quaternion: This quaternion after subtraction.
         """
         assert isinstance(alpha, numbers.Number), "alpha is not a number"
         assert self.shape == p.shape, f"Shape mismatch: expected {self.shape}, got {p.shape}"
@@ -188,14 +188,14 @@ class Quaternion:
         Adds another quaternion or a scalar to this quaternion.
 
         Args:
-            p (Quaterion or numbers.Number): The quaternion or scalar to add.
+            p (quaternion or numbers.Number): The quaternion or scalar to add.
             alpha (numbers.Number): A scaling factor for the addition.
 
         Returns:
-            Quaterion: This quaternion after addition.
+            quaternion: This quaternion after addition.
         """
         assert isinstance(alpha, numbers.Number), "alpha is not a number"
-        assert self.shape == p.shape, "can not create a random quaterion matrix. Please add a proper integer number"
+        assert self.shape == p.shape, "can not create a random quaternion matrix. Please add a proper integer number"
 
         if isinstance(p, Quaternion):
             self.quaternion = torch.add(self.quaternion,
@@ -226,7 +226,7 @@ class Quaternion:
 
     def __truediv__(self, p) -> 'Quaternion':
         if isinstance(p, Quaternion):
-            self.quaternion = torch.true_divide(self.quaternion, p.quaterion)
+            self.quaternion = torch.true_divide(self.quaternion, p.quaternion)
         elif isinstance(p, numbers.Number):
             self.quaternion = torch.true_divide(self.quaternion, p)
         else:
@@ -242,7 +242,7 @@ class Quaternion:
 
     def __floordiv__(self, p) -> 'Quaternion':
         if isinstance(p, Quaternion):
-            self.quaternion = torch.floor_divide(self.quaternion, p.quaterion)
+            self.quaternion = torch.floor_divide(self.quaternion, p.quaternion)
         elif isinstance(p, numbers.Number):
             self.quaternion = torch.floor_divide(self.quaternion, p)
         else:
@@ -261,7 +261,7 @@ class Quaternion:
             assert p.shape == self.shape, "incoming vector has to be the same dimension"
 
             # Compute outer product
-            terms = torch.bmm(p.quaterion.view(-1, 4, 1),
+            terms = torch.bmm(p.quaternion.view(-1, 4, 1),
                               self.quaternion.view(-1, 1, 4))
 
             w = terms[:, 0, 0] - terms[:, 1, 1] - terms[:, 2, 2] - terms[:, 3,
@@ -398,11 +398,11 @@ class Quaternion:
             counter (int): The number of random quaternions to generate. Defaults to 1.
 
         Returns:
-            Quaterion: The generated random quaternion.
+            quaternion: The generated random quaternion.
         """
         assert isinstance(
             counter, int
-        ), "can not create a random quaterion matrix. Please add a proper integer number"
+        ), "can not create a random quaternion matrix. Please add a proper integer number"
 
         if counter <= 0:
             counter = 1
@@ -423,7 +423,7 @@ class Quaternion:
         Returns a quaternion with zero scalar part.
 
         Returns:
-            Quaterion: The quaternion with zero scalar part.
+            quaternion: The quaternion with zero scalar part.
         """
         quat = Quaternion.one
         quat.quaternion[0, 0] = 0.0
@@ -436,7 +436,7 @@ class Quaternion:
         Returns a quaternion with one scalar part.
 
         Returns:
-            Quaterion: The quaternion with one scalar part.
+            quaternion: The quaternion with one scalar part.
         """
         quat = Quaternion(1)
         return quat
@@ -448,10 +448,10 @@ class Quaternion:
         Returns a quaternion with x component.
 
         Returns:
-            Quaterion: The quaternion with x component.
+            quaternion: The quaternion with x component.
         """
         quat = Quaternion.zero
-        quat.quaterion[0, 1]
+        quat.quaternion[0, 1]
         return quat
 
     @classproperty
@@ -461,10 +461,10 @@ class Quaternion:
         Returns a quaternion with y component.
 
         Returns:
-            Quaterion: The quaternion with y component.
+            quaternion: The quaternion with y component.
         """
         quat = Quaternion.zero
-        quat.quaterion[0, 2]
+        quat.quaternion[0, 2]
         return quat
 
     @classproperty
@@ -474,10 +474,10 @@ class Quaternion:
         Returns a quaternion with z component.
 
         Returns:
-            Quaterion: The quaternion with z component.
+            quaternion: The quaternion with z component.
         """
         quat = Quaternion.zero
-        quat.quaterion[0, 3]
+        quat.quaternion[0, 3]
         return quat
 
     @property
@@ -573,7 +573,7 @@ class Quaternion:
         Checks if two quaternions are equal.
 
         Args:
-            p (Quaterion): The quaternion to compare.
+            p (quaternion): The quaternion to compare.
 
         Returns:
             bool: True if the quaternions are equal, False otherwise.
@@ -585,7 +585,7 @@ class Quaternion:
         Negates the quaternion.
 
         Returns:
-            Quaterion: The negated quaternion.
+            quaternion: The negated quaternion.
         """
         return -1. * self
 
@@ -597,7 +597,7 @@ class Quaternion:
             inplace (bool): If True, modify the quaternion in place. Otherwise, return a new quaternion.
 
         Returns:
-            Quaterion: The conjugated quaternion.
+            quaternion: The conjugated quaternion.
         """
         if inplace:
             self.quaternion[..., 1:] *= -1
@@ -616,7 +616,7 @@ class Quaternion:
             exponent (float): The exponent to raise the quaternion to.
 
         Returns:
-            Quaterion: The quaternion raised to the power.
+            quaternion: The quaternion raised to the power.
         """
         exponent = float(exponent)
         norm = self.norm
@@ -640,10 +640,10 @@ class Quaternion:
         Rotates the quaternion by another quaternion.
 
         Args:
-            p (Quaterion): The quaternion to rotate by.
+            p (quaternion): The quaternion to rotate by.
 
         Returns:
-            Quaterion: The rotated quaternion.
+            quaternion: The rotated quaternion.
         """
         assert torch.count_nonzero(
             p.scalar) == 0, "p has to be of form p[...,0]=0"
@@ -669,9 +669,9 @@ class Quaternion:
         quat = Quaternion(size=1)
         quat.quaternion = torch.tensor([[w, x, y, z]])
         return quat
-
+    
     @staticmethod
-    def from_rodrigues(cls, axis: torch.Tensor, angle: float) -> 'Quaternion':
+    def from_rodrigues(axis: torch.Tensor, angle: float) -> 'Quaternion':
         """Konvertiert eine Rodrigues-Darstellung (Achse + Winkel) in ein Quaternion.
         
         Args:
@@ -679,15 +679,15 @@ class Quaternion:
             angle (float): Der Rotationswinkel in Radiant.
         
         Returns:
-            Quaterion: Das resultierende Quaternion.
+            quaternion: Das resultierende Quaternion.
         """
         axis = axis / torch.norm(axis)  # Normalisiere die Achse
         half_angle = angle / 2.0
         w = torch.cos(half_angle)
         xyz = axis * torch.sin(half_angle)
 
-        quat = cls(size=1)
-        quat.quaterion = torch.cat([w.unsqueeze(0), xyz], dim=0).unsqueeze(0)
+        quat = Quaternion(size=1)
+        quat.quaternion = torch.cat([w.unsqueeze(0), xyz], dim=0).unsqueeze(0)
         return quat
 
     def to_rodrigues(self) -> Tuple[torch.Tensor, float]:
@@ -696,8 +696,8 @@ class Quaternion:
         Returns:
             Tuple[torch.Tensor, float]: Die Rotationsachse (3D-Vektor) und der Winkel in Radiant.
         """
-        w = self.quaterion[:, 0]
-        xyz = self.quaterion[:, 1:]
+        w = self.quaternion[:, 0]
+        xyz = self.quaternion[:, 1:]
 
         angle = 2 * torch.acos(w)
         axis = xyz / torch.norm(xyz, dim=1, keepdim=True)
@@ -710,7 +710,7 @@ class Quaternion:
             Returns:
                 Tuple[float, float, float]: Roll-, Pitch- und Yaw-Winkel in Radiant.
         """
-        w, x, y, z = self.quaterion[0]
+        w, x, y, z = self.quaternion[0]
 
         # Roll (x-Achse)
         roll = torch.atan2(2 * (w * x + y * z), 1 - 2 * (x**2 + y**2))
@@ -722,3 +722,25 @@ class Quaternion:
         yaw = torch.atan2(2 * (w * z + x * y), 1 - 2 * (y**2 + z**2))
 
         return roll.item(), pitch.item(), yaw.item()
+
+    def rotate_vector(self, vector: torch.Tensor) -> torch.Tensor:
+        """
+        Rotiert einen 3D-Vektor mit der aktuellen Quaternion.
+
+        Args:
+            vector (torch.Tensor): Der zu rotierende 3D-Vektor.
+
+        Returns:
+            torch.Tensor: Der rotierte Vektor.
+        """
+        assert vector.shape == (3,), "Der Eingabevektor muss eine Länge von 3 haben"
+
+        # Erzeuge ein Quaternion für den Vektor (0, x, y, z)
+        v_quat = Quaternion(size=1)
+        v_quat.quaternion = torch.cat((torch.tensor([0.0]), vector)).unsqueeze(0)  # (1, 4) Tensor
+
+        # Berechne die Rotation: q * v * q^-1
+        q_conjugate = self.conjugate(inplace=False)  # Konjugierte Quaternion
+        rotated_vector = self * v_quat * q_conjugate  # Quaternionen-Multiplikation
+
+        return rotated_vector.quaternion[:, 1:]  # Gib nur den Vektoranteil zurück
